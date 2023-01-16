@@ -7,14 +7,20 @@ const useHttp = ()=> {
         setIsLoading(true);
         console.log("onfigs.url",configs.url);
         try{
-            const response = await fetch(configs.url);
+            const response = await fetch(configs.url,{
+                method: configs.method ? configs.method : 'GET',
+                headers: configs.headers ? configs.headers : {},
+                body: configs.body ? JSON.stringify(configs.body) : null, 
+            });
             if(!response.ok){
                 throw new Error('request failed')
             }
             
             const data = await response.json();
             console.log(data);
-            configs.applyData(data)
+            if(typeof applyData == 'function'){
+                configs.applyData(data)
+            }
         }catch(error){
             setError(error.message || 'Something went wrong!');
         }

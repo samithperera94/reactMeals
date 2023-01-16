@@ -1,11 +1,16 @@
 import React from 'react';
 import classes from './Cart.module.css';
 import Modal from '../UI/Modal';
-import { useContext } from 'react';
+import { useContext,useState } from 'react';
 import CartContext from '../../store/cart-context';
 import CartItem from './CartItem';
+import Checkout from './Checkout';
+import useHttp from '../../hooks/use-http';
 
 const Cart = (props) => {
+
+    const [isCheckOut,setIsCheckout] = useState(false);
+    const {sendRequest,isLoading,error:fetchError} = useHttp();
 
     const cartCtx = useContext(CartContext);
     const totalAmout = `$${cartCtx.totalAmout.toFixed(2)}`;
@@ -17,6 +22,17 @@ const Cart = (props) => {
     const CartItemAddHandler = item => {
         cartCtx.addItem({...item,amount:1});
     };
+
+    const submitOrderHandler = (userData) => {
+        sendRequest({
+            url:'https://react-tasks-ee846-default-rtdb.asia-southeast1.firebasedatabase.app/orders.json',
+            method: 'POST',
+            body: JSON.stringify({
+                user: userData,
+                orderedItems: cartCtx.items
+            }), 
+        })
+    }; 
     const cartItems = <ul>{cartCtx.items.map((item) => {
         return<CartItem  
         key={item.id} 
@@ -29,13 +45,16 @@ const Cart = (props) => {
         
     })}</ul>;  
 
-    // const cartItems = <ul>{[
-    //     {id:'c1',name:'Sushi',amount:2, price: 12.99},
-    //     {id:'c2',name:'Chicken Kottu',amount:1, price: 15.99},
-    //     {id:'c3',name:'Hoppers',amount:10, price: 10.99}
-    // ].map((item) => {
-    //     return<li key={item.id}>{item.name}</li>
-    // })}</ul>;   
+    const orderHandler = () => {
+        setIsCheckout(true);
+    }
+
+    const modalActions = <div className={classes.actions}> 
+            <button className={classes['button-alt']} onClick={props.onCloseCart}>Close</button>
+            {hasItems && <button className={classes.button} onClick={orderHandler}>Order</button>}
+            
+        </div>
+  
 
     return (
             <Modal onClick={props.onCloseCart}>
@@ -44,11 +63,8 @@ const Cart = (props) => {
                     <span>Total Amount</span>
                     <span>{totalAmout}</span>
                 </div>
-                <div className={classes.actions}> 
-                    <button className={classes['button-alt']} onClick={props.onCloseCart}>Close</button>
-                    {hasItems && <button className={classes.button}>Order</button>}
-                    
-                </div>
+                {isCheckOut && <Checkout onConfirm={submitOrderHandler} onCancel={props.onClose}/>}
+                {!isCheckOut && modalActions}
             </Modal>
             );
 };
