@@ -1,37 +1,47 @@
 import classes from './AvailableMeals.module.css';
 import Card from '../UI/Card';
 import MealItem from './MealItem/MealItem';
+import useHttp from '../../hooks/use-http';
+import { useEffect,useState } from 'react';
 
 
-const DUMMY_MEALS = [
-    {
-      id: 'm1',
-      name: 'Sushi',
-      description: 'Finest fish and veggies',
-      price: 22.99,
-    },
-    {
-      id: 'm2',
-      name: 'Schnitzel',
-      description: 'A german specialty!',
-      price: 16.5,
-    },
-    {
-      id: 'm3',
-      name: 'Barbecue Burger',
-      description: 'American, raw, meaty',
-      price: 12.99,
-    },
-    {
-      id: 'm4',
-      name: 'Green Bowl',
-      description: 'Healthy...and green...',
-      price: 18.99,
-    },
-];
 
 const AvailableMeals = () => {
-    const mealsList = DUMMY_MEALS.map(meal => {
+  const {sendRequest,isLoading,error:fetchError} = useHttp();
+  const [mealList,setMealList] = useState([]);
+
+  const transformData = (data)=> {
+    console.warn("data",data,typeof data);
+    const data_array = [];
+    for(const key in data){
+      data_array.push({
+        id: key,
+        name: data[key].name,
+        description: data[key].description,
+        price: data[key].price,
+      });
+    }
+    // console.warn(typeof data_array, "data_array >>>",data_array);
+    setMealList(data_array);
+  }
+
+  useEffect(()=>{
+    console.warn("calling useEffect")
+    sendRequest({
+      url:'https://react-tasks-ee846-default-rtdb.asia-southeast1.firebasedatabase.app/meals.json',
+      applyData:(data)=>transformData(data)
+    });
+  },[sendRequest])
+
+  if(isLoading){
+    return <p>loading ...</p>
+  }
+
+  if(fetchError){
+    return <p>{fetchError}</p>
+  }
+  console.warn("mealList",mealList)
+    const mealsList = mealList.map(meal => {
        return   <MealItem 
                     id={meal.id}
                     key={meal.id} 
