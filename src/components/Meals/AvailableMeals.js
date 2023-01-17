@@ -21,7 +21,7 @@ const AvailableMeals = () => {
         price: data[key].price,
       });
     }
-    // console.warn(typeof data_array, "data_array >>>",data_array);
+    console.warn(typeof data_array, "data_array >>>",data_array);
     setMealList(data_array);
   }
 

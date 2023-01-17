@@ -10,7 +10,7 @@ import useHttp from '../../hooks/use-http';
 const Cart = (props) => {
 
     const [isCheckOut,setIsCheckout] = useState(false);
-    const {sendRequest,isLoading,error:fetchError} = useHttp();
+    const {sendRequest,isLoading,error:fetchError,success} = useHttp();
 
     const cartCtx = useContext(CartContext);
     const totalAmout = `$${cartCtx.totalAmout.toFixed(2)}`;
@@ -23,15 +23,22 @@ const Cart = (props) => {
         cartCtx.addItem({...item,amount:1});
     };
 
-    const submitOrderHandler = (userData) => {
-        sendRequest({
+    const submitOrderHandler = async(userData) => {
+        const isSuccess = await sendRequest({
             url:'https://react-tasks-ee846-default-rtdb.asia-southeast1.firebasedatabase.app/orders.json',
             method: 'POST',
             body: JSON.stringify({
                 user: userData,
                 orderedItems: cartCtx.items
             }), 
-        })
+        });
+
+        if(isSuccess){
+            cartCtx.cleaAll()
+        }
+        // setTimeout(() => {
+        //     console.warn("success",success)
+        // }, 500);
     }; 
     const cartItems = <ul>{cartCtx.items.map((item) => {
         return<CartItem  
@@ -56,15 +63,33 @@ const Cart = (props) => {
         </div>
   
 
+    const cartContent = <>
+                        {cartItems}
+                            <div className={classes.total}>
+                                <span>Total Amount</span>
+                                <span>{totalAmout}</span>
+                            </div>
+                        {isCheckOut && <Checkout onConfirm={submitOrderHandler} onCancel={props.onClose}/>}
+                        {!isCheckOut && modalActions}
+                    </>;
+
+    const isSubmittingData = <p>Sending order data ....</p>;
+
+    const didSubmitData =(<>
+                            <p>Successfully sent the order!</p>
+                            <div className={classes.actions}>
+                                <button className={classes.button} onClick={props.onCloseCart}>
+                                    Close
+                                </button>
+                            </div>
+                         </>);
+
     return (
             <Modal onClick={props.onCloseCart}>
-                {cartItems}
-                <div className={classes.total}>
-                    <span>Total Amount</span>
-                    <span>{totalAmout}</span>
-                </div>
-                {isCheckOut && <Checkout onConfirm={submitOrderHandler} onCancel={props.onClose}/>}
-                {!isCheckOut && modalActions}
+               {isLoading && isSubmittingData}
+               {success && didSubmitData}
+               {!isLoading && !success && cartContent}
+
             </Modal>
             );
 };
